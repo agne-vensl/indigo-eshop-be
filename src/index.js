@@ -61,6 +61,49 @@ app.get("/product/:id", async (req, res) => {
   }
 });
 
+app.post("/add-product", async (req, res) => {
+  let product;
+
+  try {
+    product = await schema.validateAsync({
+      image: req.body.image,
+      title: req.body.title,
+      price: req.body.price,
+      category: req.body.category,
+      description: req.body.description,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).send({ error: "Incorrect data" });
+  }
+
+  try {
+    const con = await mysql.createConnection(mysqlConfig);
+
+    const [result] = await con.execute(
+      `INSERT INTO products (image, title, price, category, description) VALUES (${mysql.escape(
+        product.image
+      )}, ${mysql.escape(product.title)}, ${mysql.escape(
+        product.price
+      )}, ${mysql.escape(product.category)}, ${mysql.escape(
+        product.description
+      )})`
+    );
+    con.end();
+
+    if (!result.insertId) {
+      return res
+        .status(500)
+        .send({ error: "An unexpected error occured. Please try again later" });
+    }
+
+    res.send({ msg: "Product successfully added", id: result.insertId });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ error: "Database error. Please try again later" });
+  }
+});
+
 app.all("*", (req, res) => {
   res.status(404).send({ error: "Page not found" });
 });
