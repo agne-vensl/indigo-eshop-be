@@ -29,6 +29,22 @@ app.get("/", (req, res) => {
   res.send("OK");
 });
 
+app.get("/products", async (req, res) => {
+  try {
+    const con = await mysql.createConnection(mysqlConfig);
+
+    const [data] = await con.execute(
+      "SELECT id, image, title, price, category FROM products"
+    );
+    con.end();
+
+    res.send(data);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ error: "Database error. Please try again later" });
+  }
+});
+
 app.all("*", (req, res) => {
   res.status(404).send({ error: "Page not found" });
 });
